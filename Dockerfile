@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 3000
 
 # Comando para iniciar sua aplicação
-CMD ["node", "server.js"]
+CMD ["node", "index.js"]

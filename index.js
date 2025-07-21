@@ -2,18 +2,18 @@ const venom = require('venom-bot');
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
-const cors = require('cors'); // 👈 Permite acesso de outros domínios como Netlify
+const cors = require('cors'); // 👈 Permite acesso do frontend (Netlify)
 
 const filePath = path.join(__dirname, 'transacoes.json');
 const app = express();
-app.use(cors()); // 👈 Ativa o CORS para toda a API
+app.use(cors()); // 👈 Libera a API para consumo externo (frontend)
 
-// 🔹 Inicia o bot Venom
+// 🔹 Inicia o bot Venom com ajustes para Render
 venom
   .create({
     session: 'cofrinho-session',
     multidevice: true,
-    browserArgs: ['--no-sandbox'],
+    browserArgs: ['--no-sandbox', '--disable-setuid-sandbox'], // 👈 ESSENCIAL
     headless: 'new'
   })
   .then((client) => start(client))
@@ -21,6 +21,7 @@ venom
     console.error('❌ Erro ao iniciar o bot:', erro);
   });
 
+// 🔄 Inicia escuta de mensagens
 function start(client) {
   console.log("🤖 Bot iniciado! Escutando mensagens...");
 
@@ -43,7 +44,7 @@ function start(client) {
   });
 }
 
-// 🔍 Extrai valor, tipo e descrição
+// 🔍 Processa a mensagem e extrai valor, tipo e descrição
 function processarMensagem(mensagem) {
   const msg = mensagem.toLowerCase();
   let valor = 0;
@@ -71,7 +72,7 @@ function processarMensagem(mensagem) {
   };
 }
 
-// 💾 Salva no arquivo transacoes.json
+// 💾 Salva a transação no arquivo local
 function salvarTransacao(transacao) {
   let transacoes = [];
 
@@ -90,12 +91,12 @@ function salvarTransacao(transacao) {
   console.log('💾 Transação salva no arquivo transacoes.json!');
 }
 
-// 🌐 Endpoint simples (para teste)
+// 🌐 Endpoint simples para ver se o bot está online
 app.get('/', (req, res) => {
   res.send('🟢 Bot Cofrinho Virtual está online!');
 });
 
-// 📤 Endpoint para retornar as transações (para o React buscar)
+// 📤 Endpoint para retornar todas as transações
 app.get('/transacoes', (req, res) => {
   if (fs.existsSync(filePath)) {
     const data = fs.readFileSync(filePath, 'utf-8');

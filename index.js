@@ -1,9 +1,12 @@
 const venom = require('venom-bot');
 const fs = require('fs');
 const path = require('path');
-const express = require('express'); // 👈 Adicionado para o servidor web
+const express = require('express');
+const cors = require('cors'); // 👈 Permite acesso de outros domínios como Netlify
 
 const filePath = path.join(__dirname, 'transacoes.json');
+const app = express();
+app.use(cors()); // 👈 Ativa o CORS para toda a API
 
 // 🔹 Inicia o bot Venom
 venom
@@ -11,7 +14,7 @@ venom
     session: 'cofrinho-session',
     multidevice: true,
     browserArgs: ['--no-sandbox'],
-    headless: 'new' // 👈 ESSENCIAL para Chrome novo!
+    headless: 'new'
   })
   .then((client) => start(client))
   .catch((erro) => {
@@ -22,7 +25,6 @@ function start(client) {
   console.log("🤖 Bot iniciado! Escutando mensagens...");
 
   client.onMessage(async (message) => {
-    // Ignora mensagens inválidas ou de grupos
     if (!message.body || message.isGroupMsg) return;
 
     if (message.body.toLowerCase().includes('cofrinho virtual')) {
@@ -41,7 +43,7 @@ function start(client) {
   });
 }
 
-// 🔍 Processa a mensagem para extrair valor, tipo e descrição
+// 🔍 Extrai valor, tipo e descrição
 function processarMensagem(mensagem) {
   const msg = mensagem.toLowerCase();
   let valor = 0;
@@ -69,7 +71,7 @@ function processarMensagem(mensagem) {
   };
 }
 
-// 💾 Salva a transação no arquivo transacoes.json
+// 💾 Salva no arquivo transacoes.json
 function salvarTransacao(transacao) {
   let transacoes = [];
 
@@ -88,13 +90,27 @@ function salvarTransacao(transacao) {
   console.log('💾 Transação salva no arquivo transacoes.json!');
 }
 
-// 🌐 Servidor Express para manter app ativo no Render
-const app = express();
-
+// 🌐 Endpoint simples (para teste)
 app.get('/', (req, res) => {
   res.send('🟢 Bot Cofrinho Virtual está online!');
 });
 
+// 📤 Endpoint para retornar as transações (para o React buscar)
+app.get('/transacoes', (req, res) => {
+  if (fs.existsSync(filePath)) {
+    const data = fs.readFileSync(filePath, 'utf-8');
+    try {
+      const transacoes = JSON.parse(data);
+      res.json(transacoes);
+    } catch (e) {
+      res.status(500).json({ erro: 'Erro ao ler transações' });
+    }
+  } else {
+    res.json([]);
+  }
+});
+
+// 🚀 Inicia o servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🌐 Servidor web iniciado na porta ${PORT}`);

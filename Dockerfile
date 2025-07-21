@@ -1,4 +1,4 @@
-# Usa a imagem oficial do Node.js
+# Usa a imagem oficial do Node.js versão 20
 FROM node:20
 
 # Define o diretório de trabalho dentro do container
@@ -10,10 +10,13 @@ COPY package*.json ./
 # Instala as dependências
 RUN npm install
 
-# Copia todo o restante da aplicação
+# Copia todos os demais arquivos da aplicação
 COPY . .
 
-# Expõe a porta que o Render irá usar
+# Evita o download redundante do Chromium (venom já usa puppeteer-core)
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+
+# Expõe a porta 3000 que o Render usará
 EXPOSE 3000
 
 # Comando para iniciar sua aplicação

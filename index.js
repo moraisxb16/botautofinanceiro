@@ -1,9 +1,11 @@
 const venom = require('venom-bot');
 const fs = require('fs');
 const path = require('path');
+const express = require('express'); // 👈 Adicionado para o servidor web
 
 const filePath = path.join(__dirname, 'transacoes.json');
 
+// 🔹 Inicia o bot Venom
 venom
   .create({
     session: 'cofrinho-session',
@@ -20,10 +22,8 @@ function start(client) {
   console.log("🤖 Bot iniciado! Escutando mensagens...");
 
   client.onMessage(async (message) => {
-    // ✅ CORREÇÃO para evitar erro com mensagens sem texto
-    if (!message.body) return;
-    // Ignora mensagens de grupos
-    if (message.isGroupMsg) return;
+    // Ignora mensagens inválidas ou de grupos
+    if (!message.body || message.isGroupMsg) return;
 
     if (message.body.toLowerCase().includes('cofrinho virtual')) {
       console.log("📥 Mensagem recebida:", message.body);
@@ -41,6 +41,7 @@ function start(client) {
   });
 }
 
+// 🔍 Processa a mensagem para extrair valor, tipo e descrição
 function processarMensagem(mensagem) {
   const msg = mensagem.toLowerCase();
   let valor = 0;
@@ -68,6 +69,7 @@ function processarMensagem(mensagem) {
   };
 }
 
+// 💾 Salva a transação no arquivo transacoes.json
 function salvarTransacao(transacao) {
   let transacoes = [];
 
@@ -85,3 +87,15 @@ function salvarTransacao(transacao) {
   fs.writeFileSync(filePath, JSON.stringify(transacoes, null, 2), 'utf-8');
   console.log('💾 Transação salva no arquivo transacoes.json!');
 }
+
+// 🌐 Servidor Express para manter app ativo no Render
+const app = express();
+
+app.get('/', (req, res) => {
+  res.send('🟢 Bot Cofrinho Virtual está online!');
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🌐 Servidor web iniciado na porta ${PORT}`);
+});
